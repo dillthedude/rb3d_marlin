@@ -2795,7 +2795,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 						#endif
 
 						// Level Bed
-						#if ENABLED(PROBE_MANUALLY) || ENABLED(MESH_BED_LEVELING)
+						#if ENABLED(PROBE_MANUALLY) || ENABLED(MESH_BED_LEVELING /*|| ENABLED(AUTO_BED_LEVELING_BILINEAR)*/) // we support both automatic and manual bed leveling, so we need both options enabled here.
 							// Manual leveling uses a guided procedure
 							MENU_ITEM(submenu, MSG_MANUAL_LEVEL_BED, _lcd_level_bed_start);
 						#else
