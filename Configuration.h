@@ -662,11 +662,11 @@
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
  */
 #if RB_MODEL == RB2
-  #define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 100, 10000 }
+  #define DEFAULT_MAX_ACCELERATION      { 1500, 1500, 100, 10000 }
 #elif RB_MODEL == RB3
-  #define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 100, 10000 }
+  #define DEFAULT_MAX_ACCELERATION      { 1500, 1500, 100, 10000 }
 #elif RB_MODEL == RBB3
-  #define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 100, 10000 }
+  #define DEFAULT_MAX_ACCELERATION      { 1200, 1200, 100, 10000 }
 #endif
 /**
  * Default Acceleration (change/s) change = mm/s
@@ -677,11 +677,11 @@
  *   M204 T    Travel Acceleration
  */
 #if RB_MODEL == RB2
-  #define DEFAULT_ACCELERATION          1200    // X, Y, Z and E acceleration for printing moves
+  #define DEFAULT_ACCELERATION          1500    // X, Y, Z and E acceleration for printing moves
   #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
   #define DEFAULT_TRAVEL_ACCELERATION   1200    // X, Y, Z acceleration for travel (non printing) moves
 #elif RB_MODEL == RB3
-  #define DEFAULT_ACCELERATION          1200    // X, Y, Z and E acceleration for printing moves
+  #define DEFAULT_ACCELERATION          1500    // X, Y, Z and E acceleration for printing moves
   #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
   #define DEFAULT_TRAVEL_ACCELERATION   1200    // X, Y, Z acceleration for travel (non printing) moves
 #elif RB_MODEL == RBB3
