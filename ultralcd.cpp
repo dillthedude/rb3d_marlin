@@ -1837,6 +1837,8 @@ void lcd_quick_feedback(const bool clear_buttons)
 					(
 					  #if ENABLED(AUTO_BED_LEVELING_3POINT)
 						  3
+					  #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
+						  4
 					  #elif ABL_GRID || ENABLED(MESH_BED_LEVELING)
 						  GRID_MAX_POINTS
 					  #endif
@@ -1919,7 +1921,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 							lcd_implementation_drawedit(PSTR(MSG_LEVEL_BED_NEXT_POINT), msg);
 						}
 						lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
-						if (!lcd_wait_for_move) {lcd_goto_screen(_lcd_level_bed_create_submenu);}
+						if (!lcd_wait_for_move) {lcd_goto_screen(_lcd_level_bed_create_submenu);} //<- this function right here allows us to continue manually leveling
 					}
 
 					/**
@@ -1963,12 +1965,12 @@ void lcd_quick_feedback(const bool clear_buttons)
 					- Initiates a move to the next point
 					- Calls the function "_lcd_level_bed_next_point()" which displays "Next Point" and then calls the function "_lcd_level_bed_create_submenu()" which creates a submenu for the bed leveling procedure
 					**/
-					void _lcd_level_goto_next_point() 
+					void _lcd_level_goto_next_point() //<- our manual leveling menu option directs us here
 					{
-						lcd_goto_screen(_lcd_level_bed_display_next_point);
+						lcd_goto_screen(_lcd_level_bed_display_next_point); //<- this function needs to be fixed so that 1/4 is displayed instead of 0/9
 						lcd_wait_for_move = true;
-						#if ENABLED(MESH_BED_LEVELING)
-							enqueue_and_echo_commands_P(manual_probe_index++ ? PSTR("G29 S2") : PSTR("G29 S1"));
+						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR)) //<- I think we need to add bilinear here
+							enqueue_and_echo_commands_P(manual_probe_index++ ? PSTR("G29 S2") : PSTR("G29 S1")); // if MESH_BED_LEVELING is enabled G29 S2 means go to the next point. G29 S1 means do G28 and then G29 S2.
 						#elif ENABLED(PROBE_MANUALLY)
 							enqueue_and_echo_commands_P(PSTR("G29 V1"));
 						#endif
@@ -2795,7 +2797,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 						#endif
 
 						// Level Bed
-						#if ENABLED(PROBE_MANUALLY) || ENABLED(MESH_BED_LEVELING || ENABLED(AUTO_BED_LEVELING_BILINEAR)) // we support both automatic and manual bed leveling, so we need both options enabled here.
+						#if ENABLED(PROBE_MANUALLY) || ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR) // we support both automatic and manual bed leveling, so we need both options enabled here.
 							// Manual leveling uses a guided procedure
 							MENU_ITEM(submenu, MSG_MANUAL_LEVEL_BED, _lcd_level_bed_start);
 						//#else
