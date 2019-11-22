@@ -279,7 +279,7 @@
   #if ENABLED(AUTO_BED_LEVELING_LINEAR)
     #include "least_squares_fit.h"
   #endif
-#elif ENABLED(MESH_BED_LEVELING)
+#elif ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR) //<- addition made by /dj
   #include "mesh_bed_leveling.h"
 #endif
 
@@ -6361,7 +6361,7 @@ void home_all_axes() { gcode_G28(true); }
    */
 
 
-inline void gcode_G89() {/*
+inline void gcode_G89() { /*
 
 
 	static int mbl_probe_index = -1;
@@ -6392,7 +6392,7 @@ inline void gcode_G89() {/*
 		mbl_probe_index = 0;
 		if (!lcd_wait_for_move)
 		{
-			enqueue_and_echo_commands_P(PSTR("G28\nG29 S2"));
+			enqueue_and_echo_commands_P(PSTR("G28\nG89 S2"));
 			return;
 		}
 		state = MeshNext;
@@ -6400,14 +6400,14 @@ inline void gcode_G89() {/*
 	case MeshNext:
 		if (mbl_probe_index < 0)
 		{
-			SERIAL_PROTOCOLLNPGM("Start mesh probing with \"G29 S1\" first.");
+			SERIAL_PROTOCOLLNPGM("Start mesh probing with \"G89 S1\" first.");
 			return;
 		}
-		// For each G29 S2...
+		// For each G89 S2...
 		if (mbl_probe_index == 0)
 		{
 #if HAS_SOFTWARE_ENDSTOPS
-			// For the initial G29 S2 save software endstop state
+			// For the initial G89 S2 save software endstop state
 			enable_soft_endstops = soft_endstops_enabled;
 #endif
 			// Move close to the bed before the first point
@@ -6542,11 +6542,11 @@ inline void gcode_G89() {/*
 	} // switch(state)
 
 	if (state == MeshNext) {
-		SERIAL_PROTOCOLPAIR("MBL G29 point ", MIN(mbl_probe_index, GRID_MAX_POINTS));
+		SERIAL_PROTOCOLPAIR("MBL G89 point ", MIN(mbl_probe_index, GRID_MAX_POINTS));
 		SERIAL_PROTOCOLLNPAIR(" of ", int(GRID_MAX_POINTS));
 	}
 
-	report_current_position();*/
+	report_current_position();  */
 }
 #endif
 
