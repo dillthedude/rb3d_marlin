@@ -6330,6 +6330,226 @@ void home_all_axes() { gcode_G28(true); }
 
 #endif // HAS_MESH
 
+#if ENABLED(AUTO_BED_LEVELING_BILINEAR)
+/**
+* G89: Manual Bed Leveling to be used in conjunction with Bilinear bed leveling /dj
+*/
+
+// Save 130 bytes with non-duplication of PSTR
+  void echo_not_entered() { SERIAL_PROTOCOLLNPGM(" not entered."); }
+
+  /*
+   * Parameters With G89: (largely based off of gcode G29)
+   *
+   *  S0              Produce a mesh report
+   *  S1              Start probing mesh points
+   *  S2              Probe the next mesh point
+   *  S3 Xn Yn Zn.nn  Manually modify a single point
+   *  S4 Zn.nn        Set z offset. Positive away from bed, negative closer to bed.
+   *  S5              Reset and disable mesh
+   *  S6              Prove to the previous mesh point
+   *  S7              Probe to the center mesh point
+   *  S8			  Probe to the previous mesh point from center
+   *
+   * The S0 report the points as below
+   *
+   *  +----> X-axis  1-n
+   *  |
+   *  |
+   *  v Y-axis  1-n
+   *
+   */
+
+
+inline void gcode_G89() {/*
+
+
+	static int mbl_probe_index = -1;
+#if HAS_SOFTWARE_ENDSTOPS
+	static bool enable_soft_endstops;
+#endif
+
+	MeshLevelingState state = (MeshLevelingState)parser.byteval('S', (int8_t)MeshReport);
+	// Added MeshPrevious to Dial as well, goes 0 - 8 just like RIGIBOT PANEL (Added 7th for going to center)
+	if (!WITHIN(state, 0, 8)) {
+		SERIAL_PROTOCOLLNPGM("S out of range (0-8).");
+	}
+
+	int8_t px, py;
+	switch (state) {
+	case MeshReport:
+		if (leveling_is_valid())
+		{
+			SERIAL_PROTOCOLLNPAIR("State: ", planner.leveling_active ? MSG_ON : MSG_OFF);
+			mbl.report_mesh();
+		}
+		else
+			SERIAL_PROTOCOLLNPGM("Mesh bed leveling has no data.");
+		break;
+
+	case MeshStart:
+		mbl.reset();
+		mbl_probe_index = 0;
+		if (!lcd_wait_for_move)
+		{
+			enqueue_and_echo_commands_P(PSTR("G28\nG29 S2"));
+			return;
+		}
+		state = MeshNext;
+
+	case MeshNext:
+		if (mbl_probe_index < 0)
+		{
+			SERIAL_PROTOCOLLNPGM("Start mesh probing with \"G29 S1\" first.");
+			return;
+		}
+		// For each G29 S2...
+		if (mbl_probe_index == 0)
+		{
+#if HAS_SOFTWARE_ENDSTOPS
+			// For the initial G29 S2 save software endstop state
+			enable_soft_endstops = soft_endstops_enabled;
+#endif
+			// Move close to the bed before the first point
+			do_blocking_move_to_z(0);
+		}
+		else
+		{
+			// Save Z for the previous mesh position
+			mbl.set_zigzag_z(mbl_probe_index - 1, current_position[Z_AXIS]);
+#if HAS_SOFTWARE_ENDSTOPS
+			soft_endstops_enabled = enable_soft_endstops;
+#endif
+		}
+		// If there's another point to sample, move there with optional lift.
+		if (mbl_probe_index < GRID_MAX_POINTS + 2)
+		{
+			if (mbl_probe_index == 4) { mbl_probe_index = 0; }
+			mbl.zigzag(mbl_probe_index++, px, py);
+			_manual_goto_xy(mbl.index_to_xpos[px], mbl.index_to_ypos[py]);
+		}
+		else
+		{
+			// One last "return to the bed" (as originally coded) at completion
+			current_position[Z_AXIS] = MANUAL_PROBE_HEIGHT;
+			buffer_line_to_current_position();
+			planner.synchronize();
+
+			// After recording the last point, activate home and activate
+			mbl_probe_index = -1;
+			SERIAL_PROTOCOLLNPGM("Mesh probing done.");
+			BUZZ(100, 659);
+			BUZZ(100, 698);
+
+			home_all_axes();
+			set_bed_leveling_enabled(true);
+
+#if ENABLED(MESH_G28_REST_ORIGIN)
+			current_position[Z_AXIS] = 0;
+			set_destination_from_current();
+			buffer_line_to_destination(homing_feedrate(Z_AXIS));
+			planner.synchronize();
+#endif
+
+#if ENABLED(LCD_BED_LEVELING)
+			lcd_wait_for_move = false;
+#endif
+		}
+		break;
+
+	case MeshSet:
+		if (parser.seenval('X'))
+		{
+			px = parser.value_int() - 1;
+			if (!WITHIN(px, 0, GRID_MAX_POINTS_X - 1))
+			{
+				SERIAL_PROTOCOLLNPGM("X out of range (1-" STRINGIFY(GRID_MAX_POINTS_X) ").");
+				return;
+			}
+		}
+		else
+		{
+			SERIAL_CHAR('X'); echo_not_entered();
+			return;
+		}
+
+		if (parser.seenval('Y'))
+		{
+			py = parser.value_int() - 1;
+			if (!WITHIN(py, 0, GRID_MAX_POINTS_Y - 1))
+			{
+				SERIAL_PROTOCOLLNPGM("Y out of range (1-" STRINGIFY(GRID_MAX_POINTS_Y) ").");
+				return;
+			}
+		}
+		else
+		{
+			SERIAL_CHAR('Y'); echo_not_entered();
+			return;
+		}
+
+		if (parser.seenval('Z'))
+			mbl.z_values[px][py] = parser.value_linear_units();
+		else
+		{
+			SERIAL_CHAR('Z'); echo_not_entered();
+			return;
+		}
+		break;
+
+	case MeshSetZOffset:
+		if (parser.seenval('Z'))
+			mbl.z_offset = parser.value_linear_units();
+		else
+		{
+			SERIAL_CHAR('Z'); echo_not_entered();
+			return;
+		}
+		break;
+
+
+	case MeshReset:
+		reset_bed_level();
+		break;
+
+	case MeshPrevious:
+		if (mbl_probe_index == 1)
+		{
+			mbl_probe_index = 5;
+			mbl_probe_index--;
+			_manual_goto_xy(mbl.index_to_xpos[1], mbl.index_to_ypos[0]);
+		}
+
+		else
+		{
+			mbl_probe_index--;
+			mbl.zigzag(mbl_probe_index - 1, px, py);
+			_manual_goto_xy(mbl.index_to_xpos[px], mbl.index_to_ypos[py]);
+		}
+
+
+		break;
+	case MeshCenter:
+		_manual_goto_xy(X_CENTER, Y_CENTER);
+		break;
+
+	case MeshPrev_Cent:
+		mbl.zigzag(mbl_probe_index - 1, px, py);
+		_manual_goto_xy(mbl.index_to_xpos[px], mbl.index_to_ypos[py]);
+
+
+
+	} // switch(state)
+
+	if (state == MeshNext) {
+		SERIAL_PROTOCOLPAIR("MBL G29 point ", MIN(mbl_probe_index, GRID_MAX_POINTS));
+		SERIAL_PROTOCOLLNPAIR(" of ", int(GRID_MAX_POINTS));
+	}
+
+	report_current_position();*/
+}
+#endif
+
 /**
  * G92: Set current position to given X Y Z E
  */
@@ -12310,6 +12530,10 @@ void process_parsed_command() {
       #if HAS_MESH
         case 42: gcode_G42(); break;                              // G42: Move to mesh point
       #endif
+
+	  #if HAS_LEVELING
+		case 89: gcode_G89(); break;							  // G89: Manual bed leveling to be used in conjunction with Bilinear leveling /dj
+	  #endif
 
       case 90: relative_mode = false; break;                      // G90: Absolute coordinates
       case 91: relative_mode = true; break;                       // G91: Relative coordinates
