@@ -771,7 +771,7 @@
 
 // @section leveling
 
-#if ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_UBL)
+#if ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_UBL) || ENABLED(AUTO_BED_LEVELING_BILINEAR)
   // Override the mesh area if the automatic (max) area is too large
   #define MESH_MIN_X MESH_INSET
   #define MESH_MIN_Y MESH_INSET

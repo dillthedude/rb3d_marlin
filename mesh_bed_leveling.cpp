@@ -22,7 +22,7 @@
 
 #include "MarlinConfig.h"
 
-#if ENABLED(MESH_BED_LEVELING)
+#if ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
   #include "mesh_bed_leveling.h"
   #include "Marlin.h"

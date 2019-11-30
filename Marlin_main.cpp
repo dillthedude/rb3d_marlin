@@ -4275,7 +4275,7 @@ inline void gcode_G28(const bool always_home_all) {
 
 void home_all_axes() { gcode_G28(true); }
 
-#if ENABLED(MESH_BED_LEVELING) || ENABLED(PROBE_MANUALLY)
+#if ENABLED(MESH_BED_LEVELING) || ENABLED(PROBE_MANUALLY) || ENABLED(AUTO_BED_LEVELING_BILINEAR) // dj
 
   inline void _manual_goto_xy(const float &rx, const float &ry) 
   {
@@ -6361,7 +6361,7 @@ void home_all_axes() { gcode_G28(true); }
    */
 
 
-inline void gcode_G89() { /*
+inline void gcode_G89() { /**/
 
 
 	static int mbl_probe_index = -1;
@@ -6546,7 +6546,7 @@ inline void gcode_G89() { /*
 		SERIAL_PROTOCOLLNPAIR(" of ", int(GRID_MAX_POINTS));
 	}
 
-	report_current_position();  */
+	report_current_position();  /**/
 }
 #endif
 

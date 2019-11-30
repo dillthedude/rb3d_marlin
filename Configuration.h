@@ -1154,6 +1154,18 @@
       #define BILINEAR_SUBDIVISIONS 3
     #endif
 
+    /* START Copied from Mesh Bed Leveling below */
+
+    #if RB_MODEL == RB2
+    #define MESH_INSET 45          // Set Mesh bounds as an inset region of the bed
+  #elif RB_MODEL == RB3
+    #define MESH_INSET 63
+  #elif RB_MODEL == RBB3
+    #define MESH_INSET 55          // Set Mesh bounds as an inset region of the bed
+  #endif
+
+  /* END Copied from Mesh Bed Leveling below */
+
   #endif
 
 #elif ENABLED(AUTO_BED_LEVELING_UBL)
