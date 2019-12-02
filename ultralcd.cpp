@@ -1953,8 +1953,8 @@ void lcd_quick_feedback(const bool clear_buttons)
 						lcd_goto_screen(_lcd_level_bed_display_center);
 						lcd_wait_for_move = true;
 						Gone_To_Center = true;
-						#if ENABLED(MESH_BED_LEVELING)
-							enqueue_and_echo_commands_P(PSTR("G29 S7"));
+						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR))
+							enqueue_and_echo_commands_P(PSTR("G89 S7"));
 						#elif ENABLED(PROBE_MANUALLY)
 							 enqueue_and_echo_commands_P(PSTR("G29 V1"));
 						#endif
@@ -1970,7 +1970,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 						lcd_goto_screen(_lcd_level_bed_display_next_point); //<- this function needs to be fixed so that 1/4 is displayed instead of 0/9
 						lcd_wait_for_move = true;
 						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR)) //<- I think we need to add bilinear here
-							enqueue_and_echo_commands_P(manual_probe_index++ ? PSTR("G29 S2") : PSTR("G29 S1")); // if MESH_BED_LEVELING is enabled G29 S2 means go to the next point. G29 S1 means do G28 and then G29 S2.
+							enqueue_and_echo_commands_P(manual_probe_index++ ? PSTR("G89 S2") : PSTR("G89 S1")); // if MESH_BED_LEVELING is enabled G29 S2 means go to the next point. G29 S1 means do G28 and then G29 S2.
 						#elif ENABLED(PROBE_MANUALLY)
 							enqueue_and_echo_commands_P(PSTR("G29 V1"));
 						#endif
@@ -1985,8 +1985,8 @@ void lcd_quick_feedback(const bool clear_buttons)
 					 {
 					   lcd_goto_screen(_lcd_level_bed_display_previous_point);
 					   lcd_wait_for_move = true;
-					   #if ENABLED(MESH_BED_LEVELING)
-						 enqueue_and_echo_commands_P(manual_probe_index-- ? PSTR("G29 S6") : PSTR("G29 S1"));
+					   #if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR))
+						 enqueue_and_echo_commands_P(manual_probe_index-- ? PSTR("G89 S6") : PSTR("G89 S1"));
 					   #elif ENABLED(PROBE_MANUALLY)
 						 enqueue_and_echo_commands_P(PSTR("G29 V1"));
 					   #endif
@@ -2001,8 +2001,8 @@ void lcd_quick_feedback(const bool clear_buttons)
 					{
 						lcd_goto_screen(_lcd_level_bed_display_previous_point);
 						lcd_wait_for_move = true;
-						#if ENABLED(MESH_BED_LEVELING)
-							enqueue_and_echo_commands_P(manual_probe_index-- ? PSTR("G29 S8") : PSTR("G29 S1"));
+						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR))
+							enqueue_and_echo_commands_P(manual_probe_index-- ? PSTR("G89 S8") : PSTR("G89 S1"));
 						#elif ENABLED(PROBE_MANUALLY)
 							enqueue_and_echo_commands_P(PSTR("G29 V1"));
 						#endif

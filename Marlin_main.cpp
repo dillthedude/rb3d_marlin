@@ -12531,7 +12531,7 @@ void process_parsed_command() {
         case 42: gcode_G42(); break;                              // G42: Move to mesh point
       #endif
 
-	  #if HAS_LEVELING
+	  #if (HAS_LEVELING && ENABLED(AUTO_BED_LEVELING_BILINEAR))
 		case 89: gcode_G89(); break;							  // G89: Manual bed leveling to be used in conjunction with Bilinear leveling /dj
 	  #endif
 

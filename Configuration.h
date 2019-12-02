@@ -1125,9 +1125,14 @@
 
 #if ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
-  // Set the number of grid points per dimension.
+  // Set the number of grid points per dimension. (for auto bed leveling) // dj
   #define GRID_MAX_POINTS_X 3
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
+
+  // Set the number of grid points per dimension for manual bed leveling // dj
+  #define GRID_MAX_POINTS_X_AUTO 2
+  #define GRID_MAX_POINTS_Y_AUTO GRID_MAX_POINTS_X_AUTO
+
 
   // Set the boundaries for probing (where the probe can reach).
   #define LEFT_PROBE_BED_POSITION MIN_PROBE_EDGE
