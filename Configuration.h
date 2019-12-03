@@ -1130,8 +1130,8 @@
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   // Set the number of grid points per dimension for manual bed leveling // dj
-  #define GRID_MAX_POINTS_X_AUTO 2
-  #define GRID_MAX_POINTS_Y_AUTO GRID_MAX_POINTS_X_AUTO
+  #define GRID_MAX_POINTS_X_MANUAL 2
+  #define GRID_MAX_POINTS_Y_MANUAL GRID_MAX_POINTS_X_MANUAL
 
 
   // Set the boundaries for probing (where the probe can reach).

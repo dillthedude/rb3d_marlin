@@ -2793,7 +2793,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 
 						// Auto Home if not using manual probing
 						#if DISABLED(PROBE_MANUALLY) && DISABLED(MESH_BED_LEVELING)
-							if (!is_homed) MENU_ITEM(gcode, MSG_AUTO_HOME, PSTR("G28"));
+							//if (!is_homed) MENU_ITEM(gcode, MSG_AUTO_HOME, PSTR("G28")); // I disabled this menu option because both leveling options do an auto-home before beginning leveling. /dj
 						#endif
 
 						// Level Bed

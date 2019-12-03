@@ -6422,7 +6422,7 @@ inline void gcode_G89() { /**/
 #endif
 		}
 		// If there's another point to sample, move there with optional lift.
-		if (mbl_probe_index < GRID_MAX_POINTS + 2)
+		if (mbl_probe_index < GRID_MAX_POINTS_MANUAL + 2)
 		{
 			if (mbl_probe_index == 4) { mbl_probe_index = 0; }
 			mbl.zigzag(mbl_probe_index++, px, py);
@@ -6461,9 +6461,9 @@ inline void gcode_G89() { /**/
 		if (parser.seenval('X'))
 		{
 			px = parser.value_int() - 1;
-			if (!WITHIN(px, 0, GRID_MAX_POINTS_X - 1))
+			if (!WITHIN(px, 0, GRID_MAX_POINTS_X_MANUAL - 1))
 			{
-				SERIAL_PROTOCOLLNPGM("X out of range (1-" STRINGIFY(GRID_MAX_POINTS_X) ").");
+				SERIAL_PROTOCOLLNPGM("X out of range (1-" STRINGIFY(GRID_MAX_POINTS_X_MANUAL) ").");
 				return;
 			}
 		}
@@ -6476,9 +6476,9 @@ inline void gcode_G89() { /**/
 		if (parser.seenval('Y'))
 		{
 			py = parser.value_int() - 1;
-			if (!WITHIN(py, 0, GRID_MAX_POINTS_Y - 1))
+			if (!WITHIN(py, 0, GRID_MAX_POINTS_Y_MANUAL - 1))
 			{
-				SERIAL_PROTOCOLLNPGM("Y out of range (1-" STRINGIFY(GRID_MAX_POINTS_Y) ").");
+				SERIAL_PROTOCOLLNPGM("Y out of range (1-" STRINGIFY(GRID_MAX_POINTS_Y_MANUAL) ").");
 				return;
 			}
 		}
@@ -6542,8 +6542,8 @@ inline void gcode_G89() { /**/
 	} // switch(state)
 
 	if (state == MeshNext) {
-		SERIAL_PROTOCOLPAIR("MBL G89 point ", MIN(mbl_probe_index, GRID_MAX_POINTS));
-		SERIAL_PROTOCOLLNPAIR(" of ", int(GRID_MAX_POINTS));
+		SERIAL_PROTOCOLPAIR("MBL G89 point ", MIN(mbl_probe_index, GRID_MAX_POINTS_MANUAL));
+		SERIAL_PROTOCOLLNPAIR(" of ", int(GRID_MAX_POINTS_MANUAL)); //<- this needs to be 2*2 aka GRID_MAX_POINTS_MANUAL /dj
 	}
 
 	report_current_position();  /**/
