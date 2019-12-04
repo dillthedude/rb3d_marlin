@@ -3402,7 +3402,11 @@ void lcd_quick_feedback(const bool clear_buttons)
 					defer_return_to_status = true;
 					move_menu_scale_test = scale;
 					current_position[E_AXIS] += move_menu_scale_test;
-					manual_move_to_current(E_AXIS);
+					manual_move_to_current(E_AXIS
+					#if E_MANUAL > 1
+						, eindex
+					#endif
+					);
 				}
 
 				void lcd_move_menu_100mm_test() { _goto_manual_move_test(100.0 * filament_mm_to_encoder_mm); }

@@ -37,16 +37,16 @@ enum MeshLevelingState : char {
   MeshPrev_Cent // Added MeshPrevious to Dial as well, goes 0 - 7 just like RIGIBOT PANEL
 };
 
-#define MESH_X_DIST ((MESH_MAX_X - (MESH_MIN_X)) / (GRID_MAX_POINTS_X - 1))
-#define MESH_Y_DIST ((MESH_MAX_Y - (MESH_MIN_Y)) / (GRID_MAX_POINTS_Y - 1))
+#define MESH_X_DIST ((MESH_MAX_X - (MESH_MIN_X)) / (GRID_MAX_POINTS_X_MANUAL - 1))
+#define MESH_Y_DIST ((MESH_MAX_Y - (MESH_MIN_Y)) / (GRID_MAX_POINTS_Y_MANUAL - 1))
 
 class mesh_bed_leveling 
 {
  public:
   static float z_offset,
-               z_values[GRID_MAX_POINTS_X][GRID_MAX_POINTS_Y],
-               index_to_xpos[GRID_MAX_POINTS_X],
-               index_to_ypos[GRID_MAX_POINTS_Y];
+               z_values[GRID_MAX_POINTS_X_MANUAL][GRID_MAX_POINTS_Y_MANUAL],
+               index_to_xpos[GRID_MAX_POINTS_X_MANUAL],
+               index_to_ypos[GRID_MAX_POINTS_Y_MANUAL];
 
   mesh_bed_leveling();
 
@@ -56,8 +56,8 @@ class mesh_bed_leveling
 
   FORCE_INLINE static bool has_mesh() 
   {
-    for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++)
-      for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++)
+    for (uint8_t x = 0; x < GRID_MAX_POINTS_X_MANUAL; x++)
+      for (uint8_t y = 0; y < GRID_MAX_POINTS_Y_MANUAL; y++)
         if (z_values[x][y]) return true;
     return false;
   }
@@ -67,13 +67,13 @@ class mesh_bed_leveling
   static inline void zigzag(const int8_t index, int8_t &px, int8_t &py) 
   {
       #if ENABLED(RIGIDBOT_PANEL) || MB(RIGIDBOARD_V2) // invert bed leveling point order
-        px = index / (GRID_MAX_POINTS_X);
-        py = index % (GRID_MAX_POINTS_X);
-        if (px & 1) py = (GRID_MAX_POINTS_X - 1) - py; // Zig zag
+        px = index / (GRID_MAX_POINTS_X_MANUAL);
+        py = index % (GRID_MAX_POINTS_X_MANUAL);
+        if (px & 1) py = (GRID_MAX_POINTS_X_MANUAL - 1) - py; // Zig zag
       #else
-        px = index % (GRID_MAX_POINTS_X);
-        py = index / (GRID_MAX_POINTS_X);
-        if (py & 1) px = (GRID_MAX_POINTS_X - 1) - px; // Zig zag
+        px = index % (GRID_MAX_POINTS_X_MANUAL);
+        py = index / (GRID_MAX_POINTS_X_MANUAL);
+        if (py & 1) px = (GRID_MAX_POINTS_X_MANUAL - 1) - px; // Zig zag
       #endif
   }
 
@@ -87,25 +87,25 @@ class mesh_bed_leveling
   static int8_t cell_index_x(const float &x) 
   {
     int8_t cx = (x - (MESH_MIN_X)) * (1.0 / (MESH_X_DIST));
-    return constrain(cx, 0, (GRID_MAX_POINTS_X) - 2);
+    return constrain(cx, 0, (GRID_MAX_POINTS_X_MANUAL) - 2);
   }
 
   static int8_t cell_index_y(const float &y) 
   {
     int8_t cy = (y - (MESH_MIN_Y)) * (1.0 / (MESH_Y_DIST));
-    return constrain(cy, 0, (GRID_MAX_POINTS_Y) - 2);
+    return constrain(cy, 0, (GRID_MAX_POINTS_Y_MANUAL) - 2);
   }
 
   static int8_t probe_index_x(const float &x) 
   {
     int8_t px = (x - (MESH_MIN_X) + 0.5 * (MESH_X_DIST)) * (1.0 / (MESH_X_DIST));
-    return WITHIN(px, 0, GRID_MAX_POINTS_X - 1) ? px : -1;
+    return WITHIN(px, 0, GRID_MAX_POINTS_X_MANUAL - 1) ? px : -1;
   }
 
   static int8_t probe_index_y(const float &y) 
   {
     int8_t py = (y - (MESH_MIN_Y) + 0.5 * (MESH_Y_DIST)) * (1.0 / (MESH_Y_DIST));
-    return WITHIN(py, 0, GRID_MAX_POINTS_Y - 1) ? py : -1;
+    return WITHIN(py, 0, GRID_MAX_POINTS_Y_MANUAL - 1) ? py : -1;
   }
 
   static float calc_z0(const float &a0, const float &a1, const float &z1, const float &a2, const float &z2) 

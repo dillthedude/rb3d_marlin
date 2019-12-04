@@ -31,14 +31,14 @@
   mesh_bed_leveling mbl;
 
   float mesh_bed_leveling::z_offset,
-        mesh_bed_leveling::z_values[GRID_MAX_POINTS_X][GRID_MAX_POINTS_Y],
-        mesh_bed_leveling::index_to_xpos[GRID_MAX_POINTS_X],
-        mesh_bed_leveling::index_to_ypos[GRID_MAX_POINTS_Y];
+        mesh_bed_leveling::z_values[GRID_MAX_POINTS_X_MANUAL][GRID_MAX_POINTS_Y_MANUAL],
+        mesh_bed_leveling::index_to_xpos[GRID_MAX_POINTS_X_MANUAL],
+        mesh_bed_leveling::index_to_ypos[GRID_MAX_POINTS_Y_MANUAL];
 
   mesh_bed_leveling::mesh_bed_leveling() {
-    for (uint8_t i = 0; i < GRID_MAX_POINTS_X; ++i)
+    for (uint8_t i = 0; i < GRID_MAX_POINTS_X_MANUAL; ++i)
       index_to_xpos[i] = MESH_MIN_X + i * (MESH_X_DIST);
-    for (uint8_t i = 0; i < GRID_MAX_POINTS_Y; ++i)
+    for (uint8_t i = 0; i < GRID_MAX_POINTS_Y_MANUAL; ++i)
       index_to_ypos[i] = MESH_MIN_Y + i * (MESH_Y_DIST);
     reset();
   }
@@ -48,11 +48,12 @@
     ZERO(z_values);
   }
 
+  // This function reports the saved mesh to the terminal program, like Pronterface. We don't save mesh data with MESH_BED_LEVELING, so we never call this function anyway.
   void mesh_bed_leveling::report_mesh() {
-    SERIAL_PROTOCOLLNPGM("Num X,Y: " STRINGIFY(GRID_MAX_POINTS_X) "," STRINGIFY(GRID_MAX_POINTS_Y));
+    SERIAL_PROTOCOLLNPGM("Num X,Y: " STRINGIFY(GRID_MAX_POINTS_X_MANUAL) "," STRINGIFY(GRID_MAX_POINTS_Y_MANUAL));
     SERIAL_PROTOCOLPGM("Z offset: "); SERIAL_PROTOCOL_F(z_offset, 5);
     SERIAL_PROTOCOLLNPGM("\nMeasured points:");
-    print_2d_array(GRID_MAX_POINTS_X, GRID_MAX_POINTS_Y, 5,
+    print_2d_array(GRID_MAX_POINTS_X_MANUAL, GRID_MAX_POINTS_Y_MANUAL, 5,
       [](const uint8_t ix, const uint8_t iy) { return z_values[ix][iy]; }
     );
   }
