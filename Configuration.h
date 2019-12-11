@@ -845,7 +845,7 @@
  */
 #define X_PROBE_OFFSET_FROM_EXTRUDER 38  // X offset: -left  +right  [of the nozzle]
 #define Y_PROBE_OFFSET_FROM_EXTRUDER -13  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER 1.32   // Z offset: -below +above  [the nozzle] // -1.72
+#define Z_PROBE_OFFSET_FROM_EXTRUDER -0.85   // Z offset: -below +above  [the nozzle] // -0.95 when cold
 
 // Certain types of probes need to stay away from edges
 #define MIN_PROBE_EDGE 60 //originally 10
@@ -998,7 +998,7 @@
  */
 
 // Min software endstops constrain movement within minimum coordinate bounds
-//#define MIN_SOFTWARE_ENDSTOPS														//<-- if this is commented out, we can crash into the bed
+#define MIN_SOFTWARE_ENDSTOPS														//<-- if this is commented out, we can crash into the bed
 #if ENABLED(MIN_SOFTWARE_ENDSTOPS)
   #define MIN_SOFTWARE_ENDSTOP_X
   #define MIN_SOFTWARE_ENDSTOP_Y
