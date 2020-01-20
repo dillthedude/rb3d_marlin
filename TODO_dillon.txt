@@ -1,0 +1,203 @@
+/*
+Compilation errors when #define AUTO_BED_LEVELING_BILINEAR is enabled in Marlin_1.3.2
+*/
+
+Arduino: 1.8.9 (Windows 10), Board: "Arduino/Genuino Mega or Mega 2560, ATmega2560 (Mega 2560)"
+
+C:\Users\TEKTON~1\AppData\Local\Temp\ccfYIiMp.ltrans0.ltrans.o: In function `process_parsed_command()':
+
+<artificial>:(.text+0x2748): undefined reference to `lcd_wait_for_move'
+
+<artificial>:(.text+0x276c): undefined reference to `lcd_wait_for_move'
+
+C:\Users\TEKTON~1\AppData\Local\Temp\ccfYIiMp.ltrans10.ltrans.o: In function `_lcd_display_moving()':
+
+<artificial>:(.text+0x9be): undefined reference to `lcd_wait_for_move'
+
+collect2.exe: error: ld returned 1 exit status
+
+exit status 1
+Error compiling for board Arduino/Genuino Mega or Mega 2560.
+
+This report would have more information with
+"Show verbose output during compilation"
+option enabled in File -> Preferences.
+
+
+
+`lcd_wait_for_move' is found in 3 Marlin files:
+	Marlin_main.cpp			ultralcd.cpp			ultralcd.h
+	7				11				3
+							
+	In this file, there are two	I looked through this one,	For this file, the functions that include
+	additional functions called	Tanner did a lot of his work	`lcd_wait_for_move' are the same for each
+	gcode_M704() and gcode_M705	in this file. There are three	version.
+	that don't exist in the Oct	additional instances of
+	2019 branch. Tanner said that	`lcd_wait_for_move' in this
+	he added these functions for	file, but two of them are
+	the temperature filament	commented out.
+	calibration procedure. They	
+	both use lcd_wait_for_move.	This file contains 
+	These two functions may be	'_lcd_display_moving()',
+	causing our compilation error.	which is one of the functions
+					causing a problem.
+	This file contains
+	process_parsed_command()
+	function.
+	
+	
+If the three references to `lcd_wait_for_move' that are causing compilation errors are removed from Marlin_main.cpp and ultralcd.cpp,
+the firmware compiles fine. I need to find a way to bring `lcd_wait_for_move' into scope so that I can leave Tanner's features intact.
+
+The boolean variable `lcd_wait_for_move' is declared in ultralcd.cpp - but only if MESH_BED_LEVELING is enabled, OR if both LCD_BED_LEVELING
+and PROBE_MANUALLY are enabled. At the present, LCD_BED_LEVELING is enabled, but PROBE_MANUALLY is not.
+
+Since the declaration of `lcd_wait_for_move', along with many other functions and variables were enabled under the defined MESH_BED_LEVELING
+macro, it may be safe to assume that `process_parsed_command()' and `_lcd_display_moving()' were being used for mesh bed leveling. If
+so, we can assume that they are functioning as intended.
+
+Assuming this, the best move will probably be to ...
+Should I enable PROBE_MANUALLY, or should I just declare `lcd_wait_for_move' somewhere else?
+
+I think I will move ahead in investigating the effects of enabling the PROBE_MANUALLY macro.
+If PROBE_MANUALLY is enabled, the menu item _lcd_level_bed_start is added to the Bed Leveing submenu (found in ultralcd.cpp) and the
+_lcd_level_bed_start() function is called when the menu item is selected.
+
+ultralcd.cpp line # 2800 calls _lcd_level_bed_start().
+_lcd_level_bed_start() is in ultralcd.cpp line # 2094.
+
+Right now I need to see if the same manual (point-by-point) bed leveling functions are called with the MESH_BED_LEVELING macro enabled and with
+the PROBE_MANUALLY macro enabled. Update: They indeed seem to be.
+I will go ahead with enabling PROBE_MANUALLY.
+
+To recap: Tanner's setup had mesh bed leveing enabled, what I am doing is disabling mesh bed leveling, enabling bilinear bedleveling, and
+enabling probe manualy.
+Result: Compilation failed, because PROBE_MANUALLY and FIX_MOUNTED_PROBE are not allowed to be enabled at the same time.
+
+OK, so I added "|| ENABLED(AUTO_BED_LEVELING_BILINEAR)" to line 1831 in ultralcd.cpp so that we would have the options and declared variables.
+Starting on line 2785 the menu items for bed leveling are encoded, and this is the options that is available on the LCD menu when the printer
+is loaded with the firmware. There is no option yet to manually level the bed with the fancy menu that Tanner made. I need to access this menu.
+
+With "|| ENABLED(AUTO_BED_LEVELING_BILINEAR)" added to line 1831 in ultralcd.cpp, we can easily switch between MESH_BED_LEVELING and
+AUTO_BED_LEVELING_BILINEAR. Our best bet will be to have AUTO_BED_LEVELING_BILINEAR enabled, and to call Tanner's manual bed leveling procedures
+from the bed leveling menu that is enabled with AUTO_BED_LEVELING_BILINEAR.
+When we switch between MESH_BED_LEVELING and AUTO_BED_LEVELING_BILINEAR, the menu items are enabled/disabled. We can access these menu items
+in ultralcd.cpp on line 2797 and make it so that both are enabled.
+
+With both auto and manual bed leveling enabled as menu options in ultralcd.cpp on line 2797, the manual leveling does not work. It stays
+stuck displaying "Next point: 0 / 9". (Normally it briefly says "Next point: 1 / 4")
+
+When we are selecting manual bed leveling in the lcd menu, the code takes us to line 1966 in ultralcd.cpp. There are only provisions for
+MESH_BED_LEVELING and PROBE_MANUALLY. I need to add a provision for AUTO_BED_LEVELING_BILINEAR.
+
+In line 1836 in ultralcd.cpp, I added #elif ENABLED(AUTO_BED_LEVELING_BILINEAR) 4 so that we could redefine constexpr uint8_t total_probe_points
+with the value 4.
+
+The main problem now is that in the function _lcd_level_goto_next_point(), our leveling instructions mean different things depending on what
+leveling feature is enabled in Configuration.h. If MESH_BED_LEVELING is enabled G29 S2 means go to the next point. G29 S1 means do G28 and
+then G29 S2. But if AUTO_BED_LEVELING_BILINEAR is enabled, G29 S2 means to to automatic bed leveling, and the number after S dictates the speed.
+
+Marlin_main.cpp contains some code for g29 Gcode starting at line 4330.
+
+G29 S1	Home then S2
+G29 S2	Forward
+G29 S6	Back
+G29 S7	Center
+G29 S8	Back from Center
+
+Depending on which bed leveling method is enabled, there are distinct gcode_G29() functions that are made available/unavailable. What I need to
+do is keep the gcode_G29() function that is associated with Bilinear bed leveling, and then change the manual g29 gcode calls to some other gcode
+command, and then write a new function associated with that new gcode command for manual bed leveling. That way, we can call G29 for auto bed
+leveling, and also call maybe G89 for manual bed leveling.
+
+I have created a skeleton function for gcode G89. This will be used for manual bed leveling.
+
+Right now, manual bed leveling and auto bed leveling use the same GRID_MAX_POINTS_X and GRID_MAX_POINTS_Y values. However, we want them to be 3 for
+auto bed leveling and 2 for manual bed leveling. Marlin_main.cpp contains my G89 gcode function for manual bed leveling. This is where this value
+is referenced, and so I need to change these variable names to a new variable name.
+
+GRID_MAX_POINTS_ is found in the following files:
+
+DONE~Conditionals_post.h
+DONE~configuration_store.cpp
+	G26_Mesh_Validation_Tool.cpp
+	Marlin.h
+DONE~Marlin_main.cpp
+DONE~mesh_bed_leveling.cpp
+DONE~mesh_bed_leveling.h
+	SanityCheck.h
+	ubl.cpp
+	ubl.h
+	ubl_G29.cpp
+	ubl_motion.cpp
+	ultralcd.cpp
+	ultralcd_impl_DOGM.h
+	ultralcd_impl_HD44780.h
+
+GRID_MAX_POINTS is defined in Conditionals_post.h. It is used in configuration_store.cpp for mesh bed leveing and for bilinear leveling,
+in ultralcd.cpp for mesh leveling and bilinear leveling, in Marlin_main.cpp for mesh leveling and maybe for bilinear leveling and in our manual
+G89 function, 
+
+REMINDER: Do not manually level after auto-leveling.
+
+Tanner's Temp calibration menu is found in ultralcd.cpp around line 3435.
+Descisions are made based on whether we have more than one extruder in function manual_move_to_current() in line 2930 in ultralcd.cpp.
+Tanner's function _goto_manual_move_test() on line 3400 in ultralcd.cpp does not have a provision for more than one extruder.
+In Tanner's function _goto_manual_move_test() on line 3400 in ultralcd.cpp, we need to add the following code:
+
+#if E_MANUAL > 1
+	, eindex
+#endif
+
+so that his function looks like this:
+
+void _goto_manual_move_test(const float scale) 
+{
+	defer_return_to_status = true;
+	move_menu_scale_test = scale;
+	current_position[E_AXIS] += move_menu_scale_test;
+	manual_move_to_current(E_AXIS
+	#if E_MANUAL > 1
+		, eindex
+	#endif
+	);
+}
+
+
+<First, M851 Z-18.6, then M500, then M502 and finally M501 to make sure the value used is the one sent with M851 command.>
+Use these instructions to configure z distance from probe to nozzle.
+When adjusting the z distance from probe to nozzle, getting closer to zero gives us more space between the bed and nozzle, and getting
+farther away from zero (in the negative direction) closes the gap between the bed and the nozzle.
+
+I turned on G26 Mesh Validation option in the firmware, go ahead and use it to see how the auto bed leveling does.
+Also, the bug print was doing weird fast moves at the beginning and end of the print, probably it is interpreting some of the Gcode
+differently. Look into that.
+
+FILAMENT_RUNOUT('_SENSOR' '_SCRIPT' 'MSG_*_SENSOR')
+This text is found in the following files:
+Configuration.h		FILAMENT_RUNOUT_SENSOR, FILAMENT_RUNOUT_SCRIPT		This file holds the line that enables the feature. (line 1028)
+Marlin_main.cpp		FILAMENT_RUNOUT_SENSOR
+runout.h		FILAMENT_RUNOUT_SCRIPT
+runout.cpp		FILAMENT_RUNOUT_SENSOR
+Configuration_adv.h	FILAMENT_RUNOUT_SCRIPT
+	endstops.cpp		FILAMENT_RUNOUT_SENSOR, MSG_FILAMENT_RUNOUT_SENSOR	When we run an M119 command, fil_runout state will be reported if ENABLED(FILAMENT_RUNOUT_SENSOR)
+	language.h		MSG_FILAMENT_RUNOUT_SENSOR
+	SanityCheck.h		FILAMENT_RUNOUT_SENSOR, FILAMENT_RUNOUT_SCRIPT
+
+To get the filament runout sensor option working, I uncommented the definition of FILAMENT_RUNOUT_SENSOR, changed FIL_RUNOUT_INVERTING from false
+to true, and added this line: #define FIL_RUNOUT_PIN SERVO1_PIN (in Configuration.h).
+
+To make the full size LCD work on the printer, I changed line 64 in Configuration.h so that
+RB_LCD_CONTROLLER is defined as FG_LCD rather than REPRAP_LCD, and plugged in the screen. The machine needed a restart in order to display correctly.
+
+
+Configuration.h contains MIN_PROBE_EDGE under Z PROBE OPTIONS section. This describes how far away from the edge of the bed the probe needs to stay.
+Configuration.h also contains RIGHT(LEFT/FRONT/BACK)_PROBE_BED_POSITION under BED LEVELING section. This describes the boundaries of the probe.
+RIGHT(LEFT/FRONT/BACK)_PROBE_BED_POSITION depend on MIN_PROBE_EDGE, X_BED_SIZE, and Y_BED_SIZE. When I try to adjust RIGHT_PROBE_BED_POSITION, I get a
+compilation error stating that "RIGHT_PROBE_BED_POSITION is outside the probe region." I need to adjust MAX_PROBE_X so that the probe can travel farther to
+the right when doing auto bed leveling.
+MAX_PROBE_X is defined in Conditionals_post.h
+
+
+In terms of setting nozzle and bed temperatures from the configuration menu, line 3439 in ultralcd.cpp seems to be the beginning of the "Filament temp..." menu.
+Line 63 in tempurature.cpp contains the definition for thermalManager, used in the temperature settings menu in ultralcd.cpp.
