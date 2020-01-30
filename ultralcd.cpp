@@ -3444,7 +3444,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 
 					START_MENU();
 					lcd_implementation_drawmenu_static(0, PSTR(MSG_CURRENT_TEMP), false, false, msg);
-					MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[EXTRUDERS - 1], 0, HEATER_0_MAXTEMP - 15);
+					MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[EXTRUDERS - 1], 0, HEATER_0_MAXTEMP - 15); // (not EXTRUDERS, but extruderNumber)
 					MENU_ITEM_EDIT(int3, "EXTRUDER", &extruderNumber, 1, EXTRUDERS); // select extruder
 					MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[EXTRUDERS - 1], 0, HEATER_0_MAXTEMP - 15);
 					MENU_ITEM_EDIT(float3, MSG_SPEED, &temp_cal_feedrate, 0, 180);
@@ -4193,10 +4193,10 @@ void lcd_quick_feedback(const bool clear_buttons)
  
 			/**
 				- Main
-				- Calibration
 				- Homing
 				- Move Axis
 				- Preheat
+				- Calibration
 				- (Cooldown)
 				- Filament
 				- Auto Home
@@ -4210,12 +4210,6 @@ void lcd_quick_feedback(const bool clear_buttons)
 				//  Main
 				//
 				MENU_ITEM(submenu, MSG_MAIN, lcd_main_menu); //Hard Coded back to the Main Menu
-
-				//
-				//  Calibration
-				//
-				MENU_ITEM(submenu, MSG_CALIBRATION, lcd_calibrate_menu);
-				
 
 				//
 				//  Homing
@@ -4238,6 +4232,11 @@ void lcd_quick_feedback(const bool clear_buttons)
 						MENU_ITEM(function, MSG_PREHEAT_1, lcd_preheat_m1_e0_only);
 						MENU_ITEM(function, MSG_PREHEAT_2, lcd_preheat_m2_e0_only);
 					#endif
+
+					//
+					//  Calibration
+					//
+					MENU_ITEM(submenu, MSG_CALIBRATION, lcd_calibrate_menu);
 
 					//
 					// Cooldown
