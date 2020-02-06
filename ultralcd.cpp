@@ -2863,7 +2863,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 
 				float move_menu_scale;
 				float temp_cal_feedrate = 80.0;
-				int16_t extruderNumber = 1; // the number of extruder that we are adjusting settings for (used in function _lcd_move_distance_menu_test)
+				//int16_t extruderNumber = 1; // the number of extruder that we are adjusting settings for (used in function _lcd_move_distance_menu_test)
 
 				/**
 				* If the most recent manual move hasn't been fed to the planner yet,
@@ -3444,9 +3444,22 @@ void lcd_quick_feedback(const bool clear_buttons)
 
 					START_MENU();
 					lcd_implementation_drawmenu_static(0, PSTR(MSG_CURRENT_TEMP), false, false, msg);
-					MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[EXTRUDERS - 1], 0, HEATER_0_MAXTEMP - 15); // (not EXTRUDERS, but extruderNumber)
-					MENU_ITEM_EDIT(int3, "EXTRUDER", &extruderNumber, 1, EXTRUDERS); // select extruder
-					MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[EXTRUDERS - 1], 0, HEATER_0_MAXTEMP - 15);
+					STATIC_ITEM("",true); // invisible menu item
+					#if HOTENDS == 1
+						MENU_ITEM_EDIT(int3, MSG_NOZZLE, &thermalManager.target_temperature[0], 0, HEATER_0_MAXTEMP - 15);
+					#else // HOTENDS > 1
+						MENU_ITEM_EDIT(int3, MSG_NOZZLE MSG_N1, &thermalManager.target_temperature[0], 0, HEATER_0_MAXTEMP - 15);
+						MENU_ITEM_EDIT(int3, MSG_NOZZLE MSG_N2, &thermalManager.target_temperature[1], 0, HEATER_0_MAXTEMP - 15);
+						#if HOTENDS > 2
+						  MENU_ITEM_EDIT(int3, MSG_NOZZLE MSG_N3, &thermalManager.target_temperature[2], 0, HEATER_0_MAXTEMP - 15);
+							#if HOTENDS > 3
+							  MENU_ITEM_EDIT(int3, MSG_NOZZLE MSG_N4, &thermalManager.target_temperature[3], 0, HEATER_0_MAXTEMP - 15);
+								#if HOTENDS > 4
+								  MENU_ITEM_EDIT(int3, MSG_NOZZLE MSG_N5, &thermalManager.target_temperature[4], 0, HEATER_0_MAXTEMP - 15);
+								#endif // HOTENDS > 4
+							#endif // HOTENDS > 3
+						#endif // HOTENDS > 2
+					#endif // HOTENDS > 1
 					MENU_ITEM_EDIT(float3, MSG_SPEED, &temp_cal_feedrate, 0, 180);
 					MENU_ITEM(function, MSG_EXTRUDE_100MM, lcd_move_menu_100mm_test);
 					MENU_ITEM(function, MSG_EXTRUDE_250MM, lcd_move_menu_250mm_test);
@@ -3464,7 +3477,7 @@ void lcd_quick_feedback(const bool clear_buttons)
 					}
 					lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
 					
-					if (!lcd_wait_for_move)											//<- compilation issue number three
+					if (!lcd_wait_for_move)
 					{ 
 						lcd_goto_screen(_lcd_move_distance_menu_test); 
 					}
