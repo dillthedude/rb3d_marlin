@@ -213,6 +213,11 @@ typedef struct SettingsDataStruct {
         swap_retract_recover_feedrate_mm_s;             // M208 R
 
   //
+  // USES FILAMENT RUNOUT SENSOR FEATURE (DJ)
+  //
+  bool filament_runout_feature_enabled;
+
+  //
   // !NO_VOLUMETRIC
   //
   bool parser_volumetric_enabled;                       // M200 D  parser.volumetric_enabled
@@ -650,6 +655,16 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(fwretract.swap_retract_recover_feedrate_mm_s);
     #endif
 
+	//
+	// USES FILAMENT RUNOUT SENSOR FEATURE (DJ)
+	//
+	  //_FIELD_TEST(filament_runout_feature_enabled); // do we need a field test here?
+	  // we are probably just going to set the value somewhere else, and then store it to EEPROM here, regardless of the value
+#if DISABLED(FILAMENT_RUNOUT_SENSOR)
+	  const bool filament_runout_feature_enabled = false;
+#endif
+	  EEPROM_WRITE(filament_runout_feature_enabled);
+
     //
     // Volumetric & Filament Size
     //
@@ -974,7 +989,7 @@ void MarlinSettings::postprocess() {
       #endif
       eeprom_error = true;
     }
-    else {
+    else {	// version was sucessfully verified
       float dummy = 0;
       #if DISABLED(AUTO_BED_LEVELING_UBL) || DISABLED(FWRETRACT) || ENABLED(NO_VOLUMETRICS)
         bool dummyb;
@@ -1265,6 +1280,15 @@ void MarlinSettings::postprocess() {
         EEPROM_READ(dummyb);
         for (uint8_t q=8; q--;) EEPROM_READ(dummy);
       #endif
+
+	  //
+	  // USES FILAMENT RUNOUT SENSOR FEATURE (DJ)
+	  //
+		//_FIELD_TEST(filament_runout_feature_enabled); // do we need a field test here?
+#if DISABLED(FILAMENT_RUNOUT_SENSOR)
+		bool filament_runout_feature_enabled;
+#endif
+		EEPROM_READ(filament_runout_feature_enabled);
 
       //
       // Volumetric & Filament Size
@@ -1914,7 +1938,7 @@ void MarlinSettings::reset() {
     );
     if (colon) SERIAL_ECHOLNPGM(":");
   }
-
+  
   /**
    * M503 - Report current settings in RAM
    *

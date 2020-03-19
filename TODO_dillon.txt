@@ -180,7 +180,7 @@ Marlin_main.cpp		FILAMENT_RUNOUT_SENSOR
 runout.h		FILAMENT_RUNOUT_SCRIPT
 runout.cpp		FILAMENT_RUNOUT_SENSOR
 Configuration_adv.h	FILAMENT_RUNOUT_SCRIPT
-	endstops.cpp		FILAMENT_RUNOUT_SENSOR, MSG_FILAMENT_RUNOUT_SENSOR	When we run an M119 command, fil_runout state will be reported if ENABLED(FILAMENT_RUNOUT_SENSOR)
+	endstops.cpp		FILAMENT_RUNOUT_SENSOR, MSG_FILAMENT_RUNOUT_SENSOR    When we run an M119 command, fil_runout state will be reported if ENABLED(FILAMENT_RUNOUT_SENSOR)
 	language.h		MSG_FILAMENT_RUNOUT_SENSOR
 	SanityCheck.h		FILAMENT_RUNOUT_SENSOR, FILAMENT_RUNOUT_SCRIPT
 
@@ -201,3 +201,67 @@ MAX_PROBE_X is defined in Conditionals_post.h
 
 In terms of setting nozzle and bed temperatures from the configuration menu, line 3439 in ultralcd.cpp seems to be the beginning of the "Filament temp..." menu.
 Line 63 in tempurature.cpp contains the definition for thermalManager, used in the temperature settings menu in ultralcd.cpp.
+
+The filament runout sensor feature is working, but we want a way to enable or disable the feature from the LCD screen. This will allow users with a filament runout endstop switch to
+use the feature, and allow users without a filament runout endstop switch to avoid using the feature. We want this setting to be saved in EEPROM, so that users don't have to change
+this option to their prefered setting every time they turn on their machine. The file configuration_store.cpp seems to be the file that I will need to use to add this persistant
+setting to the printer.
+configuration_store.cpp
+M500 - Store Configuration	save()
+M501 - Retrieve Configuration	_load()
+M502 - Reset Configuration	reset()
+
+Things that must (may?) be added to configuration_store.cpp is order to add an additional variable to EEPROM:
+?Variable in SettingsDataStruct?
+?Variable declared outside of any function?
+?Variable in postprocess()?
+?Variable is save()?
+Variable in _load()
+Variable in reset()
+?Variable in report()?
+
+esteppers		SettingsDataStruct/save()/_load()
+home_offset		SettingsDataStruct/save()/_load()/reset()/report()
+mesh_num_x		SettingsDataStruct/save()/_load()
+zprobe_zoffset		SettingsDataStruct/save()/_load()/reset()/report()
+grid_max_x		SettingsDataStruct/save()/_load()
+bilinear_grid_spacing	SettingsDataStruct/save()/_load()
+bilinear_start		SettingsDataStruct/save()/_load()
+z_values		SettingsDataStruct/save()/_load()/report()
+planner_leveling_active	SettingsDataStruct/save()/_load()
+delta_height		SettingsDataStruct/save()/_load()/reset()/report()
+lcd_preheat_hotend_temp	SettingsDataStruct/save()/_load()/reset()/report()
+lcd_preheat_fan_speed	SettingsDataStruct/save()/_load()/reset()/report()
+lpq_len			SettingsDataStruct/save()/_load()/reset()/report()
+lcd_contrast		SettingsDataStruct/save()/_load()/reset()/report()
+autoretract_enabled	SettingsDataStruct/save()/_load()/report()	**Pattern off of this probably**
+retract_length		SettingsDataStruct/save()/_load()/report()
+retract_feedrate_mm_s	SettingsDataStruct/save()/_load()/report()
+retract_zlift		SettingsDataStruct/save()/_load()/report()
+retract_recover_length	SettingsDataStruct/save()/_load()/report()
+swap_retract_length	SettingsDataStruct/save()/_load()/report()
+tmc_stepper_current	SettingsDataStruct/save()/_load()
+motor_current_setting	SettingsDataStruct/save()/_load()/reset()/report()
+coordinate_system	SettingsDataStruct/save()/_load()
+planner_xy_skew_factor	SettingsDataStruct/save()/_load()
+
+Where does report() report to? (To serial output)
+
+Important: By adding a filament runout feature variable to EEPROM, any machine that gets this update will need to have it's EEPROM written to. This is because the variable will take
+up space in EEPROM, and the variables after it will need to be updated/shifted appropriately.
+
+EEPROM settings: What I have done so far is in configuration_store.cpp I added "bool filament_runout_feature_enabled;" to the SettingsDataStruct at the top of the file.
+This is so that the firmware can keep track of how many bytes it will need to be loading and storing from and to EEPROM. I added a Write in MarlinSettings::save(),
+and I added a Read in MarlinSettings::_load(). In save() and load() I added a _FIELD_TEST(), but commented out these field tests, because I don't know what they do
+or if I need to have them there. I will need to either learn more about their purpose or otherwise just test the functions with and without the field tests to see
+if I can surmise what they do or tell if they are nessesary or not. I decided against adding anything relating to the filament runout feature to
+the MarlinSettings::report() function, because it is not required to make the feature work, and I am not sure exactly how it works. I may decide to go back and add
+the reporting ability later once I have the reading and writing to EEPROM working properly. In Configuration.h, I added the boolean
+variable filament_runout_feature_enabled around line 1031. This variable will only be defined if FILAMENT_RUNOUT_SENSOR is defined, because I put
+the filament_runout_feature_enabled variable declaration inside a preprocessor directive that checks to see if FILAMENT_RUNOUT_SENSOR is defined. At first, I had
+declared filament_runout_feature_enabled as a bool, but the compiler complained about this. I then declared it as a static bool, and the compilation completed
+successfully. I will need to load the firmware onto a mainboard and test it out to make sure that it loads on correctly. I will also need to add a menu option to
+change the value in EEPROM so that the setting will persist after powering the board off and then on again. I will need to check the EEPROM settings for the
+Z_PROBE_OFFSET_FROM_EXTRUDER variable, the value stored in EEPROM may differ from the value stored in the firmware, and the value in EEPROM is the correct one for
+the machine that I am working on. Special care will need to be taken to make sure that the stored EEPROM values are not lost when saving the new EEPROM data to
+the EEPROM. If I did everything right however, there may be no issues.

@@ -2863,7 +2863,6 @@ void lcd_quick_feedback(const bool clear_buttons)
 
 				float move_menu_scale;
 				float temp_cal_feedrate = 80.0;
-				//int16_t extruderNumber = 1; // the number of extruder that we are adjusting settings for (used in function _lcd_move_distance_menu_test)
 
 				/**
 				* If the most recent manual move hasn't been fed to the planner yet,
