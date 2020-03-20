@@ -163,7 +163,10 @@ void _goto_manual_move_test(const float scale)
 	);
 }
 
-
+m851 set distance from nozzle to probe trigger-point
+m500 save settings to eeprom
+m502 Reset all configurable settings to their factory defaults
+m501 Load all saved settings from EEPROM
 <First, M851 Z-18.6, then M500, then M502 and finally M501 to make sure the value used is the one sent with M851 command.>
 Use these instructions to configure z distance from probe to nozzle.
 When adjusting the z distance from probe to nozzle, getting closer to zero gives us more space between the bed and nozzle, and getting
@@ -247,8 +250,8 @@ planner_xy_skew_factor	SettingsDataStruct/save()/_load()
 
 Where does report() report to? (To serial output)
 
-Important: By adding a filament runout feature variable to EEPROM, any machine that gets this update will need to have it's EEPROM written to. This is because the variable will take
-up space in EEPROM, and the variables after it will need to be updated/shifted appropriately.
+Important: By adding a filament runout feature variable to EEPROM, any machine that gets this update will need to have it's EEPROM written to. This is because
+the variable will take up space in EEPROM, and the variables after it will need to be updated/shifted appropriately.
 
 EEPROM settings: What I have done so far is in configuration_store.cpp I added "bool filament_runout_feature_enabled;" to the SettingsDataStruct at the top of the file.
 This is so that the firmware can keep track of how many bytes it will need to be loading and storing from and to EEPROM. I added a Write in MarlinSettings::save(),
@@ -264,4 +267,51 @@ successfully. I will need to load the firmware onto a mainboard and test it out 
 change the value in EEPROM so that the setting will persist after powering the board off and then on again. I will need to check the EEPROM settings for the
 Z_PROBE_OFFSET_FROM_EXTRUDER variable, the value stored in EEPROM may differ from the value stored in the firmware, and the value in EEPROM is the correct one for
 the machine that I am working on. Special care will need to be taken to make sure that the stored EEPROM values are not lost when saving the new EEPROM data to
-the EEPROM. If I did everything right however, there may be no issues.
+the EEPROM. If I did everything right however, there may be no issues. Finally, before the firmware is uploaded to a mainboard, the EEPROM version will need to
+be changed, to reflect the fact that the structure of the data that will be stored to EEPROM has been adjusted.
+
+I changed the EEPROM version from V54 to V55. I added a menu function to be able to change the filament_runout_feature_enabled variable.
+The new EEPROM settings in the firmware seem to have translated perfectly after uploading to mainboard. I added to the MarlinSettings::report() function so that
+it tells us in the serial monitor if the feature is turned on or off depending on what is written in EEPROM (not yet tested since the menu option is not complete).
+
+Current EEPROM data for my test machine:
+>>> m503
+SENDING:M503
+echo:  G21    ; (mm)
+echo:  M149 C ; Units in Celsius
+echo:Filament settings: Disabled
+echo:  M200 D1.75
+echo:  M200 D0
+echo:Steps per unit:
+echo:  M92 X44.63 Y44.63 Z1600.00 E53.50
+echo:Maximum feedrates (units/s):
+echo:  M203 X300.00 Y300.00 Z5.00 E25.00
+echo:Maximum Acceleration (units/s2):
+echo:  M201 X1500 Y1500 Z100 E10000
+echo:Acceleration (units/s2): P<print_accel> R<retract_accel> T<travel_accel>
+*echo:  M204 P1200.00 R3000.00 T1200.00
+echo:Advanced: S<min_feedrate> T<min_travel_feedrate> B<min_segment_time_us> X<max_xy_jerk> Z<max_z_jerk> E<max_e_jerk>
+*echo:  M205 S0.00 T0.00 B20000 X10.00 Y10.00 Z0.30 E5.00
+echo:Home offset:
+echo:  M206 X0.00 Y0.00 Z0.00
+echo:Auto Bed Leveling:
+*echo:  M420 S1 Z0.00
+echo:  G29 W I1 J1 Z0.14187
+echo:  G29 W I2 J1 Z0.16937
+echo:  G29 W I3 J1 Z0.13875
+echo:  G29 W I1 J2 Z0.03000
+echo:  G29 W I2 J2 Z0.15250
+echo:  G29 W I3 J2 Z0.21125
+echo:  G29 W I1 J3 Z-0.06938
+echo:  G29 W I2 J3 Z0.06250
+echo:  G29 W I3 J3 Z0.18937
+echo:Material heatup parameters:
+echo:  M145 S0 H220 B60 F0
+echo:  M145 S1 H235 B100 F0
+echo:PID settings:
+echo:  M301 P14.39 I0.66 D80.09
+echo:  M304 P355.00 I66.50 D480.00
+echo:Z-Probe Offset (mm):
+echo:  M851 Z-0.85
+echo:Filament load/unload lengths:
+echo:  M603 L25.00 U50.00

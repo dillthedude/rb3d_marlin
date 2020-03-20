@@ -1967,9 +1967,9 @@ void lcd_quick_feedback(const bool clear_buttons)
 					**/
 					void _lcd_level_goto_next_point() //<- our manual leveling menu option directs us here
 					{
-						lcd_goto_screen(_lcd_level_bed_display_next_point); //<- this function needs to be fixed so that 1/4 is displayed instead of 0/9
+						lcd_goto_screen(_lcd_level_bed_display_next_point);
 						lcd_wait_for_move = true;
-						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR)) //<- I think we need to add bilinear here
+						#if (ENABLED(MESH_BED_LEVELING) || ENABLED(AUTO_BED_LEVELING_BILINEAR))
 							enqueue_and_echo_commands_P(manual_probe_index++ ? PSTR("G89 S2") : PSTR("G89 S1")); // if MESH_BED_LEVELING is enabled G29 S2 means go to the next point. G29 S1 means do G28 and then G29 S2.
 						#elif ENABLED(PROBE_MANUALLY)
 							enqueue_and_echo_commands_P(PSTR("G29 V1"));
@@ -3509,6 +3509,14 @@ void lcd_quick_feedback(const bool clear_buttons)
 					lcd_goto_screen(_lcd_display_homing);
 					enqueue_and_echo_commands_P(PSTR("G28"));
 				}
+
+				void enable_disable_filament_runout_sensor_feature()
+				{
+					START_MENU();
+
+					MENU_ITEM(submenu,"DONE", lcd_calibrate_menu); // go back
+					END_MENU();
+				}
 					
 				
 			//----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4176,21 +4184,19 @@ void lcd_quick_feedback(const bool clear_buttons)
 				// Level Bed
 				//
 				#if ENABLED(AUTO_BED_LEVELING_UBL)
-
 					MENU_ITEM(submenu, MSG_UBL_LEVEL_BED, _lcd_ubl_level_bed);
-
 				#elif ENABLED(LCD_BED_LEVELING)
-
 					MENU_ITEM(submenu, MSG_BED_LEVELING, lcd_bed_leveling_menu);
-
 				#endif
 
-
 				// Calibrate Filament
-
 				MENU_ITEM(submenu, MSG_FILAMENT_TEMP, lcd_move_get_e_amount_test);
 
-			} }  // End of Calibrate Menu Setup 
+				// Turn on or off filament runout sensor feature
+				MENU_ITEM(submenu,"Filament Runout", enable_disable_filament_runout_sensor_feature);
+
+				END_MENU();
+			}  // End of Calibrate Menu Setup 
 
 		
 

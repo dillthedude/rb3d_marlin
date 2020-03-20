@@ -37,7 +37,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V54"
+#define EEPROM_VERSION "V55"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -2368,6 +2368,18 @@ void MarlinSettings::reset() {
       SERIAL_ECHOLNPAIR("  M209 S", fwretract.autoretract_enabled ? 1 : 0);
 
     #endif // FWRETRACT
+
+	  /**
+	  * USES FILAMENT RUNOUT SENSOR FEATURE (DJ)
+	  */
+#if ENABLED(FILAMENT_RUNOUT_SENSOR)
+	  CONFIG_ECHO_START;
+	  SERIAL_ECHOPGM("Filament runout sensor feature: ");
+	  if (filament_runout_feature_enabled)
+		  SERIAL_ECHOLNPGM("on");
+	  else
+		  SERIAL_ECHOLNPGM("off");
+#endif
 
     /**
      * Probe Offset
