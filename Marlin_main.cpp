@@ -482,6 +482,11 @@ float soft_endstop_min[XYZ] = { X_MIN_BED, Y_MIN_BED, Z_MIN_POS },
   #endif
 #endif
 
+// Filament Runout Sensors (DJ)
+#if ENABLED(FILAMENT_RUNOUT_SENSOR)
+	bool filament_runout_feature_enabled;
+#endif
+
 #if FAN_COUNT > 0
   int16_t fanSpeeds[FAN_COUNT] = { 0 };
   #if ENABLED(EXTRA_FAN_SPEED)

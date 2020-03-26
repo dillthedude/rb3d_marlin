@@ -3510,11 +3510,18 @@ void lcd_quick_feedback(const bool clear_buttons)
 					enqueue_and_echo_commands_P(PSTR("G28"));
 				}
 
+				void write_to_eeprom_after_toggling_runout_feature()
+				{
+					enqueue_and_echo_commands_P(PSTR("M500"));
+					lcd_goto_screen(lcd_calibrate_menu);
+				}
+
 				void enable_disable_filament_runout_sensor_feature()
 				{
 					START_MENU();
-
-					MENU_ITEM(submenu,"DONE", lcd_calibrate_menu); // go back
+					MENU_ITEM_EDIT(bool,"Toggle feature",&filament_runout_feature_enabled);
+					MENU_ITEM(submenu, "Write to EEPROM", write_to_eeprom_after_toggling_runout_feature); // write and then go back
+					//MENU_ITEM(submenu,"DONE", lcd_calibrate_menu); // go back
 					END_MENU();
 				}
 					

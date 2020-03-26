@@ -315,3 +315,18 @@ echo:Z-Probe Offset (mm):
 echo:  M851 Z-0.85
 echo:Filament load/unload lengths:
 echo:  M603 L25.00 U50.00
+
+When creating a menu item that adjusts EEPROM values, the macro used is MENU_ITEM_EDIT(). While there are many examples of this macro being used in
+ultralcd.cpp, there are fortunately three examples of boolean values being adjusted. These three values being adjusted are soft_endstops_enabled,
+planner.autotemp_enabled, and planner.abort_on_endstop_hit. When adjusting boolean values in this way, three parameters are required: the variable
+type (in this case boolean), the message to be displayed in the menu to represent the item, and the actual variable. When entering the variable name
+as a parameter, remember to put an ampersand in front (&exampleVariable).
+
+Following soft_endstops_enabled as a guide, I found soft_endstops_enabled in Marlin_main.cpp, Marlin.h, and ultralcd.cpp. It looks like the variable
+is found in Marlin.h as extern bool, and in Marlin_main.cpp as bool. I am going to try changing my static bool filament_runout_feature_enabled to
+extern bool filament_runout_feature_enabled and then put bool filament_runout_feature_enabled in Marlin_main.cpp to more closely follow the pattern
+set by soft_endstops_enabled and see if that compiles and if it allows EEPROM variable adjustments correctly.
+It looks like this did the trick, it seems like filament_runout_feature_enabled is keeping it's value between power cycles. However, just like other
+values stored in EEPROM, gcode M500 must be sent in order to actually store the settings into EEPROM.
+But I just changed that. Rather than needing to send a M500 through the serial port or the lcd options, I added a menu item allowing a write to
+EEPROM immediately.
